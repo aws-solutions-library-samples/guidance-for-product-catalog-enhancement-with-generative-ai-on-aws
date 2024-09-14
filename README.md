@@ -1,17 +1,6 @@
-# Guidance Title (required)
+# Guidance for Enhanced Product Catalog with Generative AI on AWS
 
-The Guidance title should be consistent with the title established first in Alchemy.
-
-**Example:** *Guidance for Product Substitutions on AWS*
-
-This title correlates exactly to the Guidance it’s linked to, including its corresponding sample code repository. 
-
-
-## Table of Contents (required)
-
-List the top-level sections of the README template, along with a hyperlink to the specific section.
-
-### Required
+## Table of Contents
 
 1. [Overview](#overview-required)
     - [Cost](#cost)
@@ -22,194 +11,181 @@ List the top-level sections of the README template, along with a hyperlink to th
 5. [Running the Guidance](#running-the-guidance-required)
 6. [Next Steps](#next-steps-required)
 7. [Cleanup](#cleanup-required)
-
-***Optional***
-
 8. [FAQ, known issues, additional considerations, and limitations](#faq-known-issues-additional-considerations-and-limitations-optional)
-9. [Revisions](#revisions-optional)
-10. [Notices](#notices-optional)
-11. [Authors](#authors-optional)
 
-## Overview (required)
+## Overview
 
-1. Provide a brief overview explaining the what, why, or how of your Guidance. You can answer any one of the following to help you write this:
+This guidance demonstrates how to leverage AWS services and Generative AI to enhance product catalogs for e-commerce applications. The architecture uses AWS services to ingest raw product data, process it using AI models, and create an enhanced product catalog with improved descriptions, titles, and extracted features.
 
-    - **Why did you build this Guidance?**
-    - **What problem does this Guidance solve?**
+![Architecture Diagram](assets/architecture_diagram.png)
 
-2. Include the architecture diagram image, as well as the steps explaining the high-level overview and flow of the architecture. 
-    - To add a screenshot, create an ‘assets/images’ folder in your repository and upload your screenshot to it. Then, using the relative file path, add it to your README. 
+Key components of the architecture:
 
-### Cost ( required )
+1. Data Ingestion: Raw product data is sent via Amazon API Gateway or stored in an S3 bucket in JSON format.
+2. Event Processing: New products in S3 trigger an event notification to populate an Amazon SQS queue.
+3. Data Lookup: AWS Lambda functions consume messages from SQS or API Gateway, performing lookups in DynamoDB for processing rules.
+4. Workflow Orchestration: AWS Step Functions manage the enhancement process.
+5. AI Processing: AWS Lambda functions use Amazon Bedrock (Claude 3) to enhance product titles, descriptions, and extract features.
+6. Data Storage: Enhanced product data is stored in Amazon OpenSearch Service Serverless for efficient querying and retrieval.
 
-This section is for a high-level cost estimate. Think of a likely straightforward scenario with reasonable assumptions based on the problem the Guidance is trying to solve. Provide an in-depth cost breakdown table in this section below ( you should use AWS Pricing Calculator to generate cost breakdown ).
+### Cost
 
-Start this section with the following boilerplate text:
+You are responsible for the cost of the AWS services used while running this Guidance. As of March 2024, the cost for running this Guidance with the default settings in the US East (N. Virginia) Region is approximately $500.00 per month for processing 1,000,000 products.
 
-_You are responsible for the cost of the AWS services used while running this Guidance. As of <month> <year>, the cost for running this Guidance with the default settings in the <Default AWS Region (Most likely will be US East (N. Virginia)) > is approximately $<n.nn> per month for processing ( <nnnnn> records )._
+We recommend creating a [Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) through [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/) to help manage costs. Prices are subject to change. For full details, refer to the pricing webpage for each AWS service used in this Guidance.
 
-Replace this amount with the approximate cost for running your Guidance in the default Region. This estimate should be per month and for processing/serving resonable number of requests/entities.
-
-Suggest you keep this boilerplate text:
-_We recommend creating a [Budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html) through [AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/) to help manage costs. Prices are subject to change. For full details, refer to the pricing webpage for each AWS service used in this Guidance._
-
-### Sample Cost Table ( required )
-
-**Note : Once you have created a sample cost table using AWS Pricing Calculator, copy the cost breakdown to below table and upload a PDF of the cost estimation on BuilderSpace. Do not add the link to the pricing calculator in the ReadMe.**
+### Sample Cost Table
 
 The following table provides a sample cost breakdown for deploying this Guidance with the default parameters in the US East (N. Virginia) Region for one month.
 
-| AWS service  | Dimensions | Cost [USD] |
-| ----------- | ------------ | ------------ |
-| Amazon API Gateway | 1,000,000 REST API calls per month  | $ 3.50month |
-| Amazon Cognito | 1,000 active users per month without advanced security feature | $ 0.00 |
+| AWS service | Dimensions | Cost [USD] |
+|-------------|------------|------------|
+| Amazon API Gateway | 1,000,000 REST API calls per month | $3.50 |
+| Amazon S3 | 100 GB storage, 1,000,000 PUT requests | $2.30 |
+| Amazon SQS | 1,000,000 requests | $0.40 |
+| AWS Lambda | 1,000,000 invocations, 1GB memory, 1 second duration | $16.67 |
+| Amazon DynamoDB | 1 GB storage, 1,000,000 read/write requests | $1.25 |
+| AWS Step Functions | 1,000,000 state transitions | $25.00 |
+| Amazon Bedrock (Claude 3) | 1,000,000 inference requests | $400.00 |
+| Amazon OpenSearch Service Serverless | 100 GB storage, 1,000,000 indexing requests | $50.00 |
+| Total | | $499.12 |
 
-## Prerequisites (required)
+## Prerequisites
 
-### Operating System (required)
+### Operating System
 
-- Talk about the base Operating System (OS) and environment that can be used to run or deploy this Guidance, such as *Mac, Linux, or Windows*. Include all installable packages or modules required for the deployment. 
-- By default, assume Amazon Linux 2/Amazon Linux 2023 AMI as the base environment. All packages that are not available by default in AMI must be listed out.  Include the specific version number of the package or module.
+These deployment instructions are optimized to best work on Amazon Linux 2 AMI. Deployment in another OS may require additional steps.
 
-**Example:**
-“These deployment instructions are optimized to best work on **<Amazon Linux 2 AMI>**.  Deployment in another OS may require additional steps.”
+Required packages:
+- AWS CLI (version 2.0 or later)
+- Node.js (version 14.x or later)
+- npm (version 6.x or later)
+- Python (version 3.8 or later)
+- pip (version 20.x or later)
 
-- Include install commands for packages, if applicable.
+To install these packages on Amazon Linux 2, run the following commands:
 
+```bash
+sudo yum update -y
+sudo yum install -y aws-cli
+curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
+sudo yum install -y nodejs
+sudo yum install -y python3 python3-pip
+```
 
-### Third-party tools (If applicable)
+### AWS account requirements
 
-*List any installable third-party tools required for deployment.*
+- Ensure you have the necessary permissions to create and manage the required AWS services.
+- Enable Amazon Bedrock in your AWS account and request access to the Claude 3 model.
 
+### aws cdk bootstrap
 
-### AWS account requirements (If applicable)
+This Guidance uses AWS CDK. If you are using AWS CDK for the first time, perform the following bootstrapping:
 
-*List out pre-requisites required on the AWS account if applicable, this includes enabling AWS regions, requiring ACM certificate.*
+```bash
+npm install -g aws-cdk
+cdk bootstrap aws://ACCOUNT-NUMBER/REGION
+```
 
-**Example:** “This deployment requires you have public ACM certificate available in your AWS account”
+## Deployment Steps
 
-**Example resources:**
-- ACM certificate 
-- DNS record
-- S3 bucket
-- VPC
-- IAM role with specific permissions
-- Enabling a Region or service etc.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/product-catalog-enhancement.git
+   cd product-catalog-enhancement
+   ```
 
+2. Create and activate a Python virtual environment:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
-### aws cdk bootstrap (if sample code has aws-cdk)
+3. Install required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-<If using aws-cdk, include steps for account bootstrap for new cdk users.>
+4. Install CDK dependencies:
+   ```bash
+   npm install
+   ```
 
-**Example blurb:** “This Guidance uses aws-cdk. If you are using aws-cdk for first time, please perform the below bootstrapping....”
+5. Review and update the `cdk.json` file with your desired configuration parameters.
 
-### Service limits  (if applicable)
+6. Deploy the CDK stack:
+   ```bash
+   cdk deploy
+   ```
 
-<Talk about any critical service limits that affect the regular functioning of the Guidance. If the Guidance requires service limit increase, include the service name, limit name and link to the service quotas page.>
+7. Note the outputs from the CDK deployment, including the API Gateway URL and other resource ARNs.
 
-### Supported Regions (if applicable)
+## Deployment Validation
 
-<If the Guidance is built for specific AWS Regions, or if the services used in the Guidance do not support all Regions, please specify the Region this Guidance is best suited for>
+1. Open the AWS CloudFormation console and verify that the stack with the name "ProductCatalogEnhancementStack" has been created successfully with a status of "CREATE_COMPLETE".
 
+2. Run the following AWS CLI command to describe the stack and verify its status:
+   ```bash
+   aws cloudformation describe-stacks --stack-name ProductCatalogEnhancementStack
+   ```
 
-## Deployment Steps (required)
+3. Check the Amazon API Gateway console to ensure the API has been created and is deployed.
 
-Deployment steps must be numbered, comprehensive, and usable to customers at any level of AWS expertise. The steps must include the precise commands to run, and describe the action it performs.
+4. Verify that the S3 bucket, SQS queue, DynamoDB table, and OpenSearch domain have been created in their respective consoles.
 
-* All steps must be numbered.
-* If the step requires manual actions from the AWS console, include a screenshot if possible.
-* The steps must start with the following command to clone the repo. ```git clone xxxxxxx```
-* If applicable, provide instructions to create the Python virtual environment, and installing the packages using ```requirement.txt```.
-* If applicable, provide instructions to capture the deployed resource ARN or ID using the CLI command (recommended), or console action.
+## Running the Guidance
 
- 
-**Example:**
+1. To test the product enhancement process via API Gateway:
+   
+   a. Use the following curl command, replacing `{api-gateway-url}` with the actual URL from the deployment outputs:
+   ```bash
+   curl -X POST -H "Content-Type: application/json" -d '{"productId": "123", "title": "Basic T-Shirt", "description": "A simple cotton t-shirt", "features": ["cotton", "short sleeve"]}' https://{api-gateway-url}/prod/enhance
+   ```
 
-1. Clone the repo using command ```git clone xxxxxxxxxx```
-2. cd to the repo folder ```cd <repo-name>```
-3. Install packages in requirements using command ```pip install requirement.txt```
-4. Edit content of **file-name** and replace **s3-bucket** with the bucket name in your account.
-5. Run this command to deploy the stack ```cdk deploy``` 
-6. Capture the domain name created by running this CLI command ```aws apigateway ............```
+   b. You should receive a response with a job ID. Use this ID to check the status of the enhancement process.
 
+2. To test the bulk processing via S3:
+   
+   a. Upload a JSON file containing product data to the created S3 bucket.
+   b. Check the SQS queue to verify that a message has been added.
+   c. Monitor the AWS Step Functions console to see the workflow execution.
 
+3. After processing, query the OpenSearch domain to retrieve the enhanced product data:
+   ```bash
+   curl -X GET "https://{opensearch-domain-endpoint}/products/_search?q=productId:123"
+   ```
 
-## Deployment Validation  (required)
+Expected output will include the enhanced product title, description, and extracted features.
 
-<Provide steps to validate a successful deployment, such as terminal output, verifying that the resource is created, status of the CloudFormation template, etc.>
+## Next Steps
 
+- Customize the AI prompts in the Lambda functions to better suit your specific product catalog needs.
+- Implement additional data validation and error handling in the ingestion process.
+- Set up monitoring and alerting for the various components of the architecture.
+- Explore integrating the enhanced product catalog with your e-commerce frontend or recommendation systems.
 
-**Examples:**
+## Cleanup
 
-* Open CloudFormation console and verify the status of the template with the name starting with xxxxxx.
-* If deployment is successful, you should see an active database instance with the name starting with <xxxxx> in        the RDS console.
-*  Run the following CLI command to validate the deployment: ```aws cloudformation describe xxxxxxxxxxxxx```
+To avoid incurring future charges, delete the resources created by this Guidance:
 
+1. Empty the S3 bucket created by the stack.
 
+2. Delete the CDK stack:
+   ```bash
+   cdk destroy
+   ```
 
-## Running the Guidance (required)
+3. Confirm the deletion when prompted.
 
-<Provide instructions to run the Guidance with the sample data or input provided, and interpret the output received.> 
+4. Verify in the AWS CloudFormation console that the stack has been successfully deleted.
 
-This section should include:
+## FAQ, known issues, additional considerations, and limitations
 
-* Guidance inputs
-* Commands to run
-* Expected output (provide screenshot if possible)
-* Output description
+**Known issues:**
+- The Bedrock API may have rate limits that could affect processing speed for large catalogs. Consider implementing retry logic and backoff strategies in the Lambda functions.
 
+**Additional considerations:**
+- This Guidance creates public API Gateway endpoints. Ensure proper authentication and authorization mechanisms are in place for production use.
+- The OpenSearch domain is created with default settings. Adjust the instance type and storage based on your expected data volume and query patterns.
 
-
-## Next Steps (required)
-
-Provide suggestions and recommendations about how customers can modify the parameters and the components of the Guidance to further enhance it according to their requirements.
-
-
-## Cleanup (required)
-
-- Include detailed instructions, commands, and console actions to delete the deployed Guidance.
-- If the Guidance requires manual deletion of resources, such as the content of an S3 bucket, please specify.
-
-
-
-## FAQ, known issues, additional considerations, and limitations (optional)
-
-
-**Known issues (optional)**
-
-<If there are common known issues, or errors that can occur during the Guidance deployment, describe the issue and resolution steps here>
-
-
-**Additional considerations (if applicable)**
-
-<Include considerations the customer must know while using the Guidance, such as anti-patterns, or billing considerations.>
-
-**Examples:**
-
-- “This Guidance creates a public AWS bucket required for the use-case.”
-- “This Guidance created an Amazon SageMaker notebook that is billed per hour irrespective of usage.”
-- “This Guidance creates unauthenticated public API endpoints.”
-
-
-Provide a link to the *GitHub issues page* for users to provide feedback.
-
-
-**Example:** *“For any feedback, questions, or suggestions, please use the issues tab under this repo.”*
-
-## Revisions (optional)
-
-Document all notable changes to this project.
-
-Consider formatting this section based on Keep a Changelog, and adhering to Semantic Versioning.
-
-## Notices (optional)
-
-Include a legal disclaimer
-
-**Example:**
-*Customers are responsible for making their own independent assessment of the information in this Guidance. This Guidance: (a) is for informational purposes only, (b) represents AWS current product offerings and practices, which are subject to change without notice, and (c) does not create any commitments or assurances from AWS and its affiliates, suppliers or licensors. AWS products or services are provided “as is” without warranties, representations, or conditions of any kind, whether express or implied. AWS responsibilities and liabilities to its customers are controlled by AWS agreements, and this Guidance is not part of, nor does it modify, any agreement between AWS and its customers.*
-
-
-## Authors (optional)
-
-Name of code contributors
+For any feedback, questions, or suggestions, please use the issues tab under this repository.
