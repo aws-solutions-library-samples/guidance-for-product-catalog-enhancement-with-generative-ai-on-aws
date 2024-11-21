@@ -77,6 +77,7 @@ sudo yum install -y python3 python3-pip
 
 - Ensure you have the necessary permissions to create and manage the required AWS services.
 - Enable Amazon Bedrock in your AWS account and request access to the Claude 3 model.
+- Add the [necessary permissions](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/security-iam-serverless.html#security_iam_id-based-policy-examples-data-plane) for the assumed role to view Opensearch Dashboards 
 
 ### aws cdk bootstrap
 
@@ -89,7 +90,7 @@ cdk bootstrap aws://ACCOUNT-NUMBER/REGION
 
 ## Deployment Steps
 
-1. Clone the repository:
+<!-- 1. Clone the repository:
    ```bash
    git clone https://github.com/your-repo/product-catalog-enhancement.git
    cd product-catalog-enhancement
@@ -116,7 +117,29 @@ cdk bootstrap aws://ACCOUNT-NUMBER/REGION
 6. Deploy the CDK stack:
    ```bash
    cdk deploy
-   ```
+   ``` -->
+
+
+## Deployment Steps
+
+1. This guidance uses AWS SAM framework, [follow install instructions for your environment](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+
+2. Initilize the SAM environment
+```
+ sam init --location ./template
+```
+
+3. Build SAM Assets
+```
+sam build
+```
+
+4. Deploy solution 
+```
+sam deploy parameter --capabilities CAPABILITY_NAMED_IAM --guided
+```
+Fill necessary prompts from SAM CLI
+>Note: the paramenter CAPABILITY_NAMED_IAM is needed for AWS Cloudformation create necessary roles and policies to the solution.
 
 7. Note the outputs from the CDK deployment, including the API Gateway URL and other resource ARNs.
 
