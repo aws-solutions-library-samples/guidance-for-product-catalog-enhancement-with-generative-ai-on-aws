@@ -11,6 +11,12 @@ Globals:
     LoggingConfig:
       LogFormat: JSON
 
+Parameters:
+  CollectionName:
+    Description: 'Name of the collection to use for the search index'
+    Type: 'String'
+    Default: 'guidance-search-collection'
+
 Resources:
   FeatureExtractionFunction:
     Type: AWS::Serverless::Function
@@ -473,34 +479,30 @@ Resources:
     Type: AWS::OpenSearchServerless::Collection
     Properties:
       Description: 'Serverless Collection for Enhanced Search'
-      Name: guidance-search-collection
+      Name: !Ref CollectionName
       StandbyReplicas: ENABLED
       Type: VECTORSEARCH
     DependsOn: OpenSearchServerlessSecurityPolicy00encryption00gZ3hA
 
   OpenSearchServerlessSecurityPolicy00encryption00gZ3hA:
-    # UpdateReplacePolicy: Retain
     Type: AWS::OpenSearchServerless::SecurityPolicy
-    # DeletionPolicy: Retain
     Properties:
-      Policy: >-
-        {"Rules":[{"ResourceType":"collection","Resource":["collection/guidance-search-collection"]}],"AWSOwnedKey":true}
+      Policy: !Sub >-
+        {"Rules":[{"ResourceType":"collection","Resource":["collection/${CollectionName}"]}],"AWSOwnedKey":true}
       Type: encryption
-      Description: guidance-collection-encryption
-      Name: easy-guidance-collection
+      Description: !Sub '${CollectionName}-encryption'
+      Name: !Sub 'policy-encrypt-${CollectionName}'
     
 
   OpenSearchServerlessAccessPolicy00data00pBTWQ:
-    # UpdateReplacePolicy: Retain
     Type: AWS::OpenSearchServerless::AccessPolicy
-    # DeletionPolicy: Retain
     Properties:
       Policy: !Sub '[{"Rules": [{"Resource":
-        ["collection/guidance-search-collection"],"Permission":
+        ["collection/${CollectionName}"],"Permission":
         ["aoss:CreateCollectionItems", "aoss:DeleteCollectionItems",
         "aoss:UpdateCollectionItems",
         "aoss:DescribeCollectionItems"],"ResourceType": "collection"},
-        {"Resource": ["index/guidance-search-collection/*"],"Permission":
+        {"Resource": ["index/${CollectionName}/*"],"Permission":
         ["aoss:CreateIndex", "aoss:DeleteIndex", "aoss:UpdateIndex",
         "aoss:DescribeIndex", "aoss:ReadDocument",
         "aoss:WriteDocument"],"ResourceType": "index"}],"Principal":
@@ -511,16 +513,14 @@ Resources:
 
 
   OpenSearchServerlessAccessPolicy00data00McPGK:
-    # UpdateReplacePolicy: Retain
     Type: AWS::OpenSearchServerless::AccessPolicy
-    # DeletionPolicy: Retain
     Properties:
       Policy: !Sub '[{"Rules": [{"Resource":
-        ["collection/guidance-search-collection"],"Permission":
+        ["collection/${CollectionName}"],"Permission":
         ["aoss:CreateCollectionItems", "aoss:DeleteCollectionItems",
         "aoss:UpdateCollectionItems",
         "aoss:DescribeCollectionItems"],"ResourceType": "collection"},
-        {"Resource": ["index/guidance-search-collection/*"],"Permission":
+        {"Resource": ["index/${CollectionName}/*"],"Permission":
         ["aoss:CreateIndex", "aoss:DeleteIndex", "aoss:UpdateIndex",
         "aoss:DescribeIndex", "aoss:ReadDocument",
         "aoss:WriteDocument"],"ResourceType": "index"}],"Principal":
@@ -531,25 +531,17 @@ Resources:
       Name: easy-guidance-collection
     
   OpenSearchServerlessSecurityPolicy00network00KUrFV:
-    # UpdateReplacePolicy: Retain
     Type: AWS::OpenSearchServerless::SecurityPolicy
-    # DeletionPolicy: Retain
     Properties:
       Policy: !Sub '[{"Rules": [{"Resource":
-        ["collection/guidance-search-collection"],"ResourceType": "collection"},
-        {"Resource": ["collection/guidance-search-collection"],"ResourceType":
-        "dashboard"}],"AllowFromPublic": true}]'
+        ["collection/${CollectionName}"],"ResourceType": "collection"},
+        {"Resource": ["collection/${CollectionName}"],"ResourceType":
+        "dashboard"}],"AllowFromPublic": false}]'
       Type: network
-      Description: guidance-collection
-      Name: easy-guidance-collection      
+      Description: guidance-collection-network
+      Name: !Sub 'network-policy-${CollectionName}'
     
 Outputs:
   FeatureExtractionFunction:
     Description: FeatureExtractionFunction Function ARN
     Value: !GetAtt FeatureExtractionFunction.Arn
-
-
-
-# this policy should be added
-
-# https://docs.aws.amazon.com/opensearch-service/latest/developerguide/security-iam-serverless.html#security_iam_id-based-policy-examples-data-plane
