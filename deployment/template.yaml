@@ -21,7 +21,7 @@ Resources:
   FeatureExtractionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: '../source/lambda/feature-extraction/feature-extraction.zip'
+      CodeUri: './feature-extraction/'
       Description: ''
       MemorySize: 128
       Timeout: 60
@@ -83,7 +83,7 @@ Resources:
   DescriptionEnhancerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: '../source/lambda/description-enhancer/description-enhancer.zip'
+      CodeUri: './description-enhancer/'
       Description: ''
       MemorySize: 128
       Timeout: 60
@@ -145,7 +145,7 @@ Resources:
   PushOpensearchFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: '../source/lambda/push-opensearch/push-opensearch.zip'
+      CodeUri: './push-opensearch/'
       Description: ''
       MemorySize: 128
       Timeout: 60
@@ -232,7 +232,7 @@ Resources:
   TitleEnhancerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: '../source/lambda/title-enhancer/title-enhancer.zip'
+      CodeUri: './title-enhancer/'
       Description: ''
       MemorySize: 128
       Timeout: 60
