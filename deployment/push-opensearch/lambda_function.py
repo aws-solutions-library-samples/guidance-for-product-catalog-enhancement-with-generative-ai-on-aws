@@ -11,19 +11,18 @@ from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
 
-    #opensearch serverless paramenters
+    # opensearch serverless paramenters
     service = "aoss"
     region = "us-east-1"
-    host =  os.environ['ENDPOINT']
+    host = os.environ['ENDPOINT']
     credentials = boto3.Session().get_credentials()
     auth = AWSV4SignerAuth(credentials, region, service)
-    
 
-    #data passed from Opensearch
+    # data passed from Opensearch
     title = event['title']
     description = event['description']
     features = event['features']
-    
+
     print(host)
 
     client = OpenSearch(
@@ -33,6 +32,7 @@ def lambda_handler(event, context):
         verify_certs=True,
         connection_class=RequestsHttpConnection,
         pool_maxsize=20,
+        timeout=60,
     )
     index = 'products'
     body = {
@@ -43,13 +43,14 @@ def lambda_handler(event, context):
     try:
         if not client.indices.exists(index="products"):
             index_body = {
-              'settings': {
-                'index': {
-                  'number_of_shards': 4
+                'settings': {
+                    'index': {
+                        'number_of_shards': 4
+                    }
                 }
-               }
             }
-            response = client.indices.create(index, body=index_body)
+            response_index_creation = client.indices.create(
+                index, body=index_body)
 
         response = client.index(index=index, body=body)
         print(response)
