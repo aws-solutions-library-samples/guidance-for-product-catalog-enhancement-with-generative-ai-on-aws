@@ -120,13 +120,20 @@ cdk bootstrap aws://ACCOUNT-NUMBER/REGION
    ``` -->
 
 
-## Deployment Steps
 
 1. This guidance uses AWS SAM framework, [follow install instructions for your environment](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
 
 2. Initilize the SAM environment
 ```
- sam init --location ./template
+sam init
+...
+Which template source would you like to use?
+	1 - AWS Quick Start Templates
+	2 - Custom Template Location
+Choice: 2
+
+Template location (git, mercurial, http(s), zip, path): https://github.com/aws-solutions-library-samples/guidance-for-product-catalog-enhancement-with-generative-ai-on-aws/tree/main/deployment
+
 ```
 
 3. Build SAM Assets
@@ -134,27 +141,50 @@ cdk bootstrap aws://ACCOUNT-NUMBER/REGION
 sam build
 ```
 
+4. Configure account credentials
+```
+export AWS_ACCESS_KEY_ID=<YOUR_ACCESS_KEY>
+export AWS_SECRET_ACCESS_KEY=<YOUR_SECRET_KEY>
+export AWS_REGION=<YOUR_AWS_REGION>
+```
+
 4. Deploy solution 
 ```
 sam deploy parameter --capabilities CAPABILITY_NAMED_IAM --guided
 ```
-Fill necessary prompts from SAM CLI
->Note: the paramenter CAPABILITY_NAMED_IAM is needed for AWS Cloudformation create necessary roles and policies to the solution.
 
-7. Note the outputs from the CDK deployment, including the API Gateway URL and other resource ARNs.
+Fill necessary prompts from SAM CLI
+
+>[!IMPORTANT] 
+>The paramenter CAPABILITY_NAMED_IAM is needed for AWS Cloudformation create necessary roles and policies to the solution.
+
 
 ## Deployment Validation
 
-1. Open the AWS CloudFormation console and verify that the stack with the name "ProductCatalogEnhancementStack" has been created successfully with a status of "CREATE_COMPLETE".
 
-2. Run the following AWS CLI command to describe the stack and verify its status:
-   ```bash
-   aws cloudformation describe-stacks --stack-name ProductCatalogEnhancementStack
-   ```
+1. After the successfull execution you should notice the following output in terminal:
 
-3. Check the Amazon API Gateway console to ensure the API has been created and is deployed.
+```
+Successfully created/updated stack - <STACK_NAME> in <AWS_REGION>
+```
 
-4. Verify that the S3 bucket, SQS queue, DynamoDB table, and OpenSearch domain have been created in their respective consoles.
+2. Go to AWS Step Functions in AWS Console
+
+3. Locate the "StateMachine30021eef" in State Machines
+
+4. Select "Start Execution"
+
+5. Fill the Input with the following sample data: 
+
+```
+{
+   "raw-data":"Harry Potter and the Philosopher's Stone"
+}
+```
+
+6. By the end of the execution, select the "Push to Opensearch" step.
+
+7. Select input/output, check the output.
 
 ## Running the Guidance
 
