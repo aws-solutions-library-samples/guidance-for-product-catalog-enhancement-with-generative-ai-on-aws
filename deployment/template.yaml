@@ -15,7 +15,7 @@ Parameters:
   CollectionName:
     Description: 'Name of the collection to use for the search index'
     Type: 'String'
-    Default: 'guidance-search-collection'
+    Default: 'search-collection'
 
 Resources:
   FeatureExtractionFunction:
@@ -536,7 +536,7 @@ Resources:
       Policy: !Sub '[{"Rules": [{"Resource":
         ["collection/${CollectionName}"],"ResourceType": "collection"},
         {"Resource": ["collection/${CollectionName}"],"ResourceType":
-        "dashboard"}],"AllowFromPublic": false}]'
+        "dashboard"}],"AllowFromPublic": true}]'
       Type: network
       Description: guidance-collection-network
       Name: !Sub 'network-policy-${CollectionName}'
