@@ -17,12 +17,226 @@ Parameters:
     Type: 'String'
     Default: 'search-collection'
 
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.192.0.0/16
+
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.192.10.0/24
+
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.192.11.0/24
+
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.192.20.0/24
+
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.192.21.0/24
+
+
 Resources:
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ1)
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+
+  NoIngressSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "no-ingress-sg"
+      GroupDescription: "Security group with no ingress rule"
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+      - Description: Allow all outbound traffic
+        IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http access to lambda
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+      - Description: Allow all outbound traffic
+        IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
+
   FeatureExtractionFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: './feature-extraction/'
-      Description: ''
+      Description: 'Takes a product description as input and returns a JSON with products features'
       MemorySize: 128
       Timeout: 60
       Handler: lambda_function.lambda_handler
@@ -35,6 +249,17 @@ Resources:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
       PackageType: Zip
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt  DeadLetterQueue.Arn
+      ReservedConcurrentExecutions: 10
+      KmsKeyArn: !GetAtt  KMSKeyEnhancementFunction.Arn
       Policies:
         - Statement:
             - Effect: Allow
@@ -50,13 +275,20 @@ Resources:
             - Sid: BedrockAll
               Effect: Allow
               Action:
-                - bedrock:*
-              Resource: '*'
+                - bedrock:InvokeModel
+                - bedrock:ListFoundationModels
+              Resource:
+                - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - arn:aws:bedrock:us-east-1::inference-profile/us.anthropic.claude-3-sonnet-20240229-v1:0
+                - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:inference-profile/us.anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-west-2:${AWS::AccountId}:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0                      
             - Sid: DescribeKey
               Effect: Allow
               Action:
                 - kms:DescribeKey
-              Resource: arn:*:kms:*:::*
+              Resource: !Sub 'arn:*:kms:${AWS::Region}:${AWS::AccountId}::*'
             - Sid: APIsWithAllResourceAccess
               Effect: Allow
               Action:
@@ -84,7 +316,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: './description-enhancer/'
-      Description: ''
+      Description: 'This Lambda function takes a product description as input and returns a modified version of the title generated using a language model.'
       MemorySize: 128
       Timeout: 60
       Handler: lambda_function.lambda_handler
@@ -97,6 +329,17 @@ Resources:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
       PackageType: Zip
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt  DeadLetterQueue.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2        
+      ReservedConcurrentExecutions: 10
+      KmsKeyArn: !GetAtt  KMSKeyEnhancementFunction.Arn
       Policies:
         - Statement:
             - Effect: Allow
@@ -112,13 +355,20 @@ Resources:
             - Sid: BedrockAll
               Effect: Allow
               Action:
-                - bedrock:*
-              Resource: '*'
+                - bedrock:InvokeModel
+                - bedrock:ListFoundationModels
+              Resource:
+                - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - arn:aws:bedrock:us-east-1::inference-profile/us.anthropic.claude-3-sonnet-20240229-v1:0
+                - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:inference-profile/us.anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-west-2:${AWS::AccountId}:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0                      
             - Sid: DescribeKey
               Effect: Allow
               Action:
                 - kms:DescribeKey
-              Resource: arn:*:kms:*:::*
+              Resource: !Sub 'arn:*:kms:${AWS::Region}:${AWS::AccountId}::*'
             - Sid: APIsWithAllResourceAccess
               Effect: Allow
               Action:
@@ -146,7 +396,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: './push-opensearch/'
-      Description: ''
+      Description: 'This Lambda Function gets output from Title, Description and Features and push to Opensearch Serverless'
       MemorySize: 128
       Timeout: 60
       Handler: lambda_function.lambda_handler
@@ -164,11 +414,23 @@ Resources:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
       PackageType: Zip
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt  DeadLetterQueue.Arn
+      ReservedConcurrentExecutions: 10
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+      KmsKeyArn: !GetAtt  KMSKeyEnhancementFunction.Arn
       Policies:
         - Statement:
             - Sid: VisualEditor0
               Effect: Allow
               Action:
+                - aoss:APIAccessAll
                 - aoss:BatchGetLifecyclePolicy
                 - aoss:GetAccessPolicy
                 - aoss:CreateAccessPolicy
@@ -208,7 +470,8 @@ Resources:
             - Sid: VisualEditor1
               Effect: Allow
               Action:
-                - aoss:*
+                - aoss:ListCollections
+                - aoss:DashboardsAccessAll
               Resource:
                 -  !Sub 'arn:aws:aoss:*:${AWS::AccountId}:collection/*'
                 -  !Sub 'arn:aws:aoss:*:${AWS::AccountId}:dashboards/default'
@@ -227,13 +490,12 @@ Resources:
         ApplyOn: None
       RuntimeManagementConfig:
         UpdateRuntimeOn: Auto
-    DependsOn: OpenSearchServerlessCollection
   
   TitleEnhancerFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: './title-enhancer/'
-      Description: ''
+      Description: 'Lambda function takes a product title as input and returns a modified version of the title generated using a language model.'
       MemorySize: 128
       Timeout: 60
       Handler: lambda_function.lambda_handler
@@ -246,6 +508,17 @@ Resources:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
       PackageType: Zip
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt  DeadLetterQueue.Arn
+      ReservedConcurrentExecutions: 10
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2      
+      KmsKeyArn: !GetAtt  KMSKeyEnhancementFunction.Arn
       Policies:
         - Statement:
             - Effect: Allow
@@ -261,13 +534,20 @@ Resources:
             - Sid: BedrockAll
               Effect: Allow
               Action:
-                - bedrock:*
-              Resource: '*'
+                - bedrock:InvokeModel
+                - bedrock:ListFoundationModels
+              Resource:
+                - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - arn:aws:bedrock:us-east-1::inference-profile/us.anthropic.claude-3-sonnet-20240229-v1:0
+                - arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-east-1:${AWS::AccountId}:inference-profile/us.anthropic.claude-3-sonnet-20240229-v1:0
+                - !Sub arn:aws:bedrock:us-west-2:${AWS::AccountId}:foundation-model/anthropic.claude-3-sonnet-20240229-v1:0                
             - Sid: DescribeKey
               Effect: Allow
               Action:
                 - kms:DescribeKey
-              Resource: arn:*:kms:*:::*
+              Resource: !Sub 'arn:*:kms:${AWS::Region}:${AWS::AccountId}::*'
             - Sid: APIsWithAllResourceAccess
               Effect: Allow
               Action:
@@ -470,10 +750,14 @@ Resources:
               - !GetAtt PushOpensearchFunction.Arn
               - !GetAtt FeatureExtractionFunction.Arn
               - !GetAtt DescriptionEnhancerFunction.Arn
+
   LogGroup1a018160:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/vendedlogs/states/StateMachine30021eef-Logs   
+      LogGroupName: /aws/vendedlogs/states/StateMachine30021eef-Logs
+      RetentionInDays: 3
+      KmsKeyId: !GetAtt KMSKeyEnhancementFunction.Arn
+    
 
   OpenSearchServerlessCollection:
     Type: AWS::OpenSearchServerless::Collection
@@ -541,7 +825,93 @@ Resources:
       Description: guidance-collection-network
       Name: !Sub 'network-policy-${CollectionName}'
     
+
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-dlq'
+      KmsMasterKeyId: alias/aws/sqs
+
+
+  # create a kms key and allow lambda function to use
+  KMSKeyEnhancementFunction:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'KMS key for the lambda function'
+      Enabled: true
+      EnableKeyRotation: true
+      RotationPeriodInDays: 90
+      KeyPolicy:
+        Version: '2012-10-17' 
+        Id: root-account
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow cloudtrail use of the key
+            Effect: Allow
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"     
+            Resource: '*' 
+          - Sid: Allow cloudwatch logs of the key
+            Effect: Allow
+            Principal:
+              Service: "logs.amazonaws.com"
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"  
+            Resource: '*'     
+      Tags:
+        - Key: tag-key
+          Value: tag-value
+
+  
+
+
 Outputs:
   FeatureExtractionFunction:
     Description: FeatureExtractionFunction Function ARN
     Value: !GetAtt FeatureExtractionFunction.Arn
+
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+
+  PublicSubnets:
+    Description: A list of the public subnets
+    Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ]]
+
+  PrivateSubnets:
+    Description: A list of the private subnets
+    Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+
+  PublicSubnet1:
+    Description: A reference to the public subnet in the 1st Availability Zone
+    Value: !Ref PublicSubnet1
+
+  PublicSubnet2:
+    Description: A reference to the public subnet in the 2nd Availability Zone
+    Value: !Ref PublicSubnet2
+
+  PrivateSubnet1:
+    Description: A reference to the private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Description: A reference to the private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
+
+  NoIngressSecurityGroup:
+    Description: Security group with no ingress rule
+    Value: !Ref NoIngressSecurityGroup
