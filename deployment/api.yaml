@@ -1,0 +1,76 @@
+openapi: 3.0.0
+info:
+  version: '1.0'
+  title: "pit-jv-lambda-examples"
+  description: POC API
+  license:
+    name: MIT
+
+paths:
+  /execute:
+    post:
+      x-amazon-apigateway-integration:
+        credentials:
+          Fn::GetAtt: [ RoleApiGw, Arn ]
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:states:action/StartExecution"
+        httpMethod: POST
+        type: aws
+        responses:
+          default:
+            statusCode: 200
+        requestTemplates:
+          application/json:
+            Fn::Sub: |-
+              {
+                "input": "$util.escapeJavaScript($input.json('$'))",
+                "stateMachineArn": "${StateMachine30021eef}"
+              }
+      summary: Start workflow
+      responses:
+        200:
+          $ref: '#/components/responses/200Empty'
+        403:
+          $ref: '#/components/responses/Error'
+
+components:
+  schemas:
+    Error:
+      title: Error
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+  responses:
+    200Empty:
+      description: Default OK response
+
+    200Cors:
+      description: Default response for CORS method
+      headers:
+        Access-Control-Allow-Headers:
+          schema:
+            type: "string"
+        Access-Control-Allow-Methods:
+          schema:
+            type: "string"
+        Access-Control-Allow-Origin:
+          schema:
+            type: "string"
+
+    Error:
+      description: Error Response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        Access-Control-Allow-Headers:
+          schema:
+            type: "string"
+        Access-Control-Allow-Origin:
+          schema:
+            type: "string" 
