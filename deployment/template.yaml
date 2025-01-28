@@ -392,6 +392,18 @@ Resources:
       RuntimeManagementConfig:
         UpdateRuntimeOn: Auto
   
+
+  # PandasLambdaLayer:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: AWS-SDK-Pandas
+  #     Description: AWS SDK for pandas (awswrangler)
+  #     ContentUri: arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python312:16
+  #     CompatibleRuntimes:
+  #       - python3.12
+  #       - python3.13
+        
+
   PushOpensearchFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -490,6 +502,8 @@ Resources:
         ApplyOn: None
       RuntimeManagementConfig:
         UpdateRuntimeOn: Auto
+      Layers: 
+        - "arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python312:16"
   
   TitleEnhancerFunction:
     Type: AWS::Serverless::Function
@@ -876,8 +890,98 @@ Resources:
         - Key: tag-key
           Value: tag-value
 
-  
 
+  privateapiguidancevpceSecurityGroup8C8216BD:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: privateapiguidancevpceSecurityGroup
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: '-1'
+      SecurityGroupIngress:
+        - CidrIp: !GetAtt VPC.CidrBlock
+          Description: !Join 
+            - ''
+            - - 'from '
+              - !GetAtt VPC.CidrBlock
+              - ':443'
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+      VpcId: !Ref VPC
+
+  Privateapitutorialvpce487DB922:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      ServiceName: !Join 
+        - ''
+        - - com.amazonaws.
+          - !Ref 'AWS::Region'
+          - .execute-api
+      VpcId: !Ref VPC
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !GetAtt privateapiguidancevpceSecurityGroup8C8216BD.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      VpcEndpointType: Interface
+
+  MyHttpApi3:
+    Type: AWS::Serverless::Api
+    Properties:
+     DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:          
+            Location: './api.yaml'
+     StageName: test-stage
+     AccessLogSetting:
+        DestinationArn: !GetAtt MyLogGroup.Arn
+        Format: $context.extendedRequestId $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId
+     EndpointConfiguration: 
+       Types: PRIVATE 
+       VPCEndpointIds: [ !Ref Privateapitutorialvpce487DB922 ]
+
+  RoleApiGw:
+   Type: AWS::IAM::Role
+   Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: apigw
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:              
+              - Effect: Allow
+                Action: states:StartExecution
+                Resource: !Ref StateMachine30021eef
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  MyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join
+        - ''
+        - - /aws/apigateway/
+          - !Ref MyHttpApi3
+      RetentionInDays: 3
+
+  RequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      Name: RequestValidatorInput
+      RestApiId: !Ref MyHttpApi3
+      ValidateRequestBody: True
+      ValidateRequestParameters: True
 
 Outputs:
   FeatureExtractionFunction:
@@ -915,3 +1019,7 @@ Outputs:
   NoIngressSecurityGroup:
     Description: Security group with no ingress rule
     Value: !Ref NoIngressSecurityGroup
+
+
+#ref: https://stackoverflow.com/questions/42914487/how-to-invoke-an-aws-step-function-using-api-gateway
+#lambda layer ref: https://aws-sdk-pandas.readthedocs.io/en/3.11.0/layers.html
