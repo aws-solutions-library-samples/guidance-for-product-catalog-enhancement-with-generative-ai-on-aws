@@ -911,7 +911,7 @@ Resources:
           ToPort: 443
       VpcId: !Ref VPC
 
-  Privateapitutorialvpce487DB922:
+  Privateapiguidancevpce487DB922:
     Type: 'AWS::EC2::VPCEndpoint'
     Properties:
       ServiceName: !Join 
@@ -940,7 +940,7 @@ Resources:
      EndpointConfiguration:
        Type: PRIVATE
        VPCEndpointIds:
-         - !Ref Privateapitutorialvpce487DB922
+         - !Ref Privateapiguidancevpce487DB922
      Auth:
        ResourcePolicy:
          IntrinsicVpcWhitelist:
