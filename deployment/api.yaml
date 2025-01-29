@@ -1,10 +1,7 @@
 openapi: 3.0.0
 info:
   version: '1.0'
-  title: "pit-jv-lambda-examples"
-  description: POC API
-  license:
-    name: MIT
+  title: "api-guidance-search"
 
 paths:
   /execute:

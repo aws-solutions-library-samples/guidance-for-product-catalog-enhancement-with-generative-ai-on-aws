@@ -937,12 +937,18 @@ Resources:
           Parameters:          
             Location: './api.yaml'
      StageName: test-stage
+     EndpointConfiguration:
+       Type: PRIVATE
+       VPCEndpointIds:
+         - !Ref Privateapitutorialvpce487DB922
+     Auth:
+       ResourcePolicy:
+         IntrinsicVpcWhitelist:
+           - !Ref VPC
      AccessLogSetting:
         DestinationArn: !GetAtt MyLogGroup.Arn
         Format: $context.extendedRequestId $context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] "$context.httpMethod $context.resourcePath $context.protocol" $context.status $context.responseLength $context.requestId
-     EndpointConfiguration: 
-       Types: PRIVATE 
-       VPCEndpointIds: [ !Ref Privateapitutorialvpce487DB922 ]
+
 
   RoleApiGw:
    Type: AWS::IAM::Role
@@ -966,13 +972,20 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
+  Account:
+    Type: 'AWS::ApiGateway::Account'
+    Properties:
+      CloudWatchRoleArn: !GetAtt 
+        - RoleApiGw
+        - Arn
+
   MyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join
-        - ''
-        - - /aws/apigateway/
-          - !Ref MyHttpApi3
+        - '-'
+        - - !Ref MyHttpApi3
+          - access-logs
       RetentionInDays: 3
 
   RequestValidator:
