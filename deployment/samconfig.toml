@@ -1,10 +1,9 @@
 version = 0.1
 [default.deploy.parameters]
-stack_name = "stack-search"
+stack_name = "search-guidance"
 resolve_s3 = true
-s3_prefix = "stack-search"
+s3_prefix = "search-guidance"
 region = "us-east-1"
 capabilities = "CAPABILITY_NAMED_IAM"
-parameter_overrides = "CollectionName=\"search-collection\" EnvironmentName=\"test\" VpcCIDR=\"10.192.0.0/16\" PublicSubnet1CIDR=\"10.192.10.0/24\" PublicSubnet2CIDR=\"10.192.11.0/24\" PrivateSubnet1CIDR=\"10.192.20.0/24\" PrivateSubnet2CIDR=\"10.192.21.0/24\""
+parameter_overrides = "CollectionName=\"search-collection\" EnvironmentName=\"\" VpcCIDR=\"10.192.0.0/16\" PublicSubnet1CIDR=\"10.192.10.0/24\" PublicSubnet2CIDR=\"10.192.11.0/24\" PrivateSubnet1CIDR=\"10.192.20.0/24\" PrivateSubnet2CIDR=\"10.192.21.0/24\""
 image_repositories = []
-confirm_changeset = true
