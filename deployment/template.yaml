@@ -232,6 +232,36 @@ Resources:
         IpProtocol: "-1"
         CidrIp: 0.0.0.0/0
 
+  FlowLogRole:
+   Type: AWS::IAM::Role
+   Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  MyDetailedFlowLogDeliveringToCloudWatchLogs:
+    Type: AWS::EC2::FlowLog
+    Properties: 
+      ResourceId: !Ref VPC
+      ResourceType: VPC
+      TrafficType: REJECT
+      LogGroupName: FlowLogsGroup
+      DeliverLogsPermissionArn: !GetAtt FlowLogRole.Arn
+      LogFormat: ${version} ${vpc-id} ${subnet-id} ${instance-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${tcp-flags} ${type} ${pkt-srcaddr} ${pkt-dstaddr}
+      MaxAggregationInterval: 60
+      Tags:
+        - Key: Name
+          Value: FlowLogVPC
+        - Key: Purpose
+          Value: RejectTraffic
+
   FeatureExtractionFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -297,6 +327,14 @@ Resources:
                 - ec2:DescribeSubnets
                 - ec2:DescribeSecurityGroups
               Resource: '*'
+            - Sid: enforceSSLinSQS
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+              Resource: !GetAtt  DeadLetterQueue.Arn
+              Condition:
+                Bool:
+                  aws:SecureTransport: 'true'            
             - Sid: PassRoleToBedrock
               Effect: Allow
               Action:
@@ -377,6 +415,14 @@ Resources:
                 - ec2:DescribeSubnets
                 - ec2:DescribeSecurityGroups
               Resource: '*'
+            - Sid: enforceSSLinSQS
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+              Resource: !GetAtt  DeadLetterQueue.Arn
+              Condition:
+                Bool:
+                  aws:SecureTransport: 'true'
             - Sid: PassRoleToBedrock
               Effect: Allow
               Action:
@@ -491,6 +537,14 @@ Resources:
               Action:
                 - logs:CreateLogGroup
               Resource:  !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+            - Sid: enforceSSLinSQS
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+              Resource: !GetAtt  DeadLetterQueue.Arn
+              Condition:
+                Bool:
+                  aws:SecureTransport: 'true'              
             - Effect: Allow
               Action:
                 - logs:CreateLogStream
@@ -570,6 +624,14 @@ Resources:
                 - ec2:DescribeSubnets
                 - ec2:DescribeSecurityGroups
               Resource: '*'
+            - Sid: enforceSSLinSQS
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+              Resource: !GetAtt  DeadLetterQueue.Arn
+              Condition:
+                Bool:
+                  aws:SecureTransport: 'true'
             - Sid: PassRoleToBedrock
               Effect: Allow
               Action:
@@ -931,6 +993,9 @@ Resources:
   MyHttpApi3:
     Type: AWS::Serverless::Api
     Properties:
+     CacheClusterEnabled: true
+     CacheClusterSize: '0.5'
+     TracingEnabled: true
      DefinitionBody:
         'Fn::Transform':
           Name: 'AWS::Include'
@@ -987,6 +1052,7 @@ Resources:
         - - !Ref MyHttpApi3
           - access-logs
       RetentionInDays: 3
+      KmsKeyId: !GetAtt KMSKeyEnhancementFunction.Arn
 
   RequestValidator:
     Type: AWS::ApiGateway::RequestValidator
