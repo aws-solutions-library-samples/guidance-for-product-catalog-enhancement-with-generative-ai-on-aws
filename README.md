@@ -168,47 +168,53 @@ Fill necessary prompts from SAM CLI
 Successfully created/updated stack - <STACK_NAME> in <AWS_REGION>
 ```
 
-2. Go to AWS Step Functions in AWS Console
-
-3. Locate the "StateMachine30021eef" in State Machines
-
-4. Select "Start Execution"
-
-5. Fill the Input with the following sample data: 
-
-```
-{
-   "raw-data":"Harry Potter and the Philosopher's Stone"
-}
-```
-
-6. By the end of the execution, select the "Push to Opensearch" step.
-
-7. Select input/output, check the output.
-
-## Running the Guidance
-
 1. To test the product enhancement process via API Gateway:
    
-   a. Use the following curl command, replacing `{api-gateway-url}` with the actual URL from the deployment outputs:
-   ```bash
-   curl -X POST -H "Content-Type: application/json" -d '{"productId": "123", "title": "Basic T-Shirt", "description": "A simple cotton t-shirt", "features": ["cotton", "short sleeve"]}' https://{api-gateway-url}/prod/enhance
+   a. Open the AWS console and navigate into the API Gateway service, select APIs, api-guidance-search and POST method.
+
+   b. Navigate into the "Test" tab
+
+   c. In the Request Body pass the raw description of your product as in the example:
+   ```
+   {
+      "raw-data": "These classic t-shirts and basic tees for men are crafted for comfort and style, featuring soft, breathable knit fabric blends. Our collection includes t shirts for men cotton, plain t shirts, and the timeless black shirt option, ensuring there's something for everyone. With a focus on quality, each t-shirt is designed to have a regular fit providing ease through the shoulders, chest, and waist, suitable for various body types."
+   }
    ```
 
-   b. You should receive a response with a job ID. Use this ID to check the status of the enhancement process.
+   ![AWS API Test](assets/api_test.png)
 
-2. To test the bulk processing via S3:
+   d. You will receive a response body in the format:
+   ````
+   {"executionArn":"arn:aws:states:<REGION>:<Account-ID>:execution:StateMachine<XXXXX:GUID>","startDate":<TIMESTAMP>}
    
-   a. Upload a JSON file containing product data to the created S3 bucket.
-   b. Check the SQS queue to verify that a message has been added.
-   c. Monitor the AWS Step Functions console to see the workflow execution.
+   if you see Serialization Errors, check for non UTF-8 characters in you raw-data
 
-3. After processing, query the OpenSearch domain to retrieve the enhanced product data:
-   ```bash
-   curl -X GET "https://{opensearch-domain-endpoint}/products/_search?q=productId:123"
-   ```
 
-Expected output will include the enhanced product title, description, and extracted features.
+
+6. Checking the execution
+   a. Use the search bar to navigate to AWS Step Function Service
+
+   b. Click in State Machines, on the name of your StateMachine and select the last execution
+
+   c. Check that all the steps have finished(it could take a few seconds)
+
+   d. Check that the step "Push to Opensearch" returned a 200 statusCode.
+
+   ![AWS Step Function Execution](assets/step_function.png)
+
+   HINT: Navigate on each steps and check the enhanced text.
+
+
+## Adapting the guidance for your environment
+
+1. This guidance provide a private API Gateway. You can change the AWS Cloud Formation
+to deploy it in your existing VPC. T
+
+2. This API is already configured with Cognito authentication and a Cognito User pool is already deployed
+   a. To create a user on the user pool: https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html
+   b. To use the user to call the API externally: https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
+
+3. This guidance provide an AWS OpenSearch Serverless domain, you can use your own OpenSearch product catalog changing the environment variable ENDPOINT in lambda search-guidance-PushOpensearchFunction-XXXX and the required role.
 
 ## Next Steps
 
@@ -238,7 +244,6 @@ To avoid incurring future charges, delete the resources created by this Guidance
 - The Bedrock API may have rate limits that could affect processing speed for large catalogs. Consider implementing retry logic and backoff strategies in the Lambda functions.
 
 **Additional considerations:**
-- This Guidance creates public API Gateway endpoints. Ensure proper authentication and authorization mechanisms are in place for production use.
 - The OpenSearch domain is created with default settings. Adjust the instance type and storage based on your expected data volume and query patterns.
 
 For any feedback, questions, or suggestions, please use the issues tab under this repository.
