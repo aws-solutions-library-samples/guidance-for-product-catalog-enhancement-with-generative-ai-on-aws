@@ -187,6 +187,7 @@ Successfully created/updated stack - <STACK_NAME> in <AWS_REGION>
    ````
    {"executionArn":"arn:aws:states:<REGION>:<Account-ID>:execution:StateMachine<XXXXX:GUID>","startDate":<TIMESTAMP>}
    
+   ```
    if you see Serialization Errors, check for non UTF-8 characters in you raw-data
 
 
@@ -227,16 +228,14 @@ to deploy it in your existing VPC. T
 
 To avoid incurring future charges, delete the resources created by this Guidance:
 
-1. Empty the S3 bucket created by the stack.
-
-2. Delete the CDK stack:
+1. Delete the CDK stack:
    ```bash
    cdk destroy
    ```
 
-3. Confirm the deletion when prompted.
+2. Confirm the deletion when prompted.
 
-4. Verify in the AWS CloudFormation console that the stack has been successfully deleted.
+3. Verify in the AWS CloudFormation console that the stack has been successfully deleted.
 
 ## FAQ, known issues, additional considerations, and limitations
 
