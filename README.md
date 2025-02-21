@@ -186,8 +186,8 @@ Successfully created/updated stack - <STACK_NAME> in <AWS_REGION>
    d. You will receive a response body in the format:
    ````
    {"executionArn":"arn:aws:states:<REGION>:<Account-ID>:execution:StateMachine<XXXXX:GUID>","startDate":<TIMESTAMP>}
-   
    ```
+
    if you see Serialization Errors, check for non UTF-8 characters in you raw-data
 
 
