@@ -2,20 +2,23 @@
 
 ## Table of Contents
 
-1. [Overview](#overview-required)
+1. [Overview](#overview)
     - [Cost](#cost)
-2. [Prerequisites](#prerequisites-required)
-    - [Operating System](#operating-system-required)
-3. [Deployment Steps](#deployment-steps-required)
-4. [Deployment Validation](#deployment-validation-required)
-5. [Running the Guidance](#running-the-guidance-required)
-6. [Next Steps](#next-steps-required)
-7. [Cleanup](#cleanup-required)
-8. [FAQ, known issues, additional considerations, and limitations](#faq-known-issues-additional-considerations-and-limitations-optional)
+2. [Prerequisites](#prerequisites)
+    - [Operating System](#operating-system)
+3. [Deployment Steps](#deployment-steps)
+4. [Deployment Validation](#deployment-validation)
+5. [Running the Guidance](#running-the-guidance)
+6. [Next Steps](#next-steps)
+   - [Adapting the guidance for your environment](#adapting-the-guidance-for-your-environment)
+7. [Cleanup](#cleanup)
+8. [FAQ, known issues, additional considerations, and limitations](#faq-known-issues-additional-considerations-and-limitations)
 
 ## Overview
 
-This guidance demonstrates how to leverage AWS services and Generative AI to enhance product catalogs for e-commerce applications. The architecture uses AWS services to ingest raw product data, process it using AI models, and create an enhanced product catalog with improved descriptions, titles, and extracted features.
+When working with e-commerce applications, one of the main concerns for retailers is making their products easily accessible to customers, both through organic searches and within their own e-commerce platform. One strategy to accomplish this is to improve how product titles, descriptions, and key features appear in their product catalog. Considering that a retailer can have thousands or millions of products in their stores or across marketplaces, this task becomes difficult to scale through human analysis.
+
+This guidance demonstrates how to leverage AWS services and Generative AI to optimize e-commerce product catalogs, enhancing product discoverability and search performance. By implementing these solutions, businesses can create a more intuitive shopping experience, enabling customers to find products more efficiently while potentially driving higher conversion rates. The architecture uses AWS services to ingest raw product data, process it using AI models, and create an enhanced product catalog with improved descriptions, titles, and extracted features.
 
 ![Architecture Diagram](assets/architecture_diagram.png)
 
@@ -63,6 +66,7 @@ Required packages:
 - Python (version 3.8 or later)
 - pip (version 20.x or later)
 
+
 To install these packages on Amazon Linux 2, run the following commands:
 
 ```bash
@@ -72,6 +76,11 @@ curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
 sudo yum install -y nodejs
 sudo yum install -y python3 python3-pip
 ```
+
+SAM:
+
+This guidance uses AWS SAM framework, [follow install instructions for your environment](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+
 
 ### AWS account requirements
 
@@ -90,58 +99,43 @@ cdk bootstrap aws://ACCOUNT-NUMBER/REGION
 
 ## Deployment Steps
 
-<!-- 1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/product-catalog-enhancement.git
-   cd product-catalog-enhancement
-   ```
+1. Clone this repository
 
-2. Create and activate a Python virtual environment:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+```
+git clone https://github.com/aws-solutions-library-samples/guidance-for-product-catalog-enhancement-with-generative-ai-on-aws.git
+```
 
-3. Install required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. Navigate to the deployment folder
 
-4. Install CDK dependencies:
-   ```bash
-   npm install
-   ```
-
-5. Review and update the `cdk.json` file with your desired configuration parameters.
-
-6. Deploy the CDK stack:
-   ```bash
-   cdk deploy
-   ``` -->
+````
+cd deployment
+````
 
 
 
-1. This guidance uses AWS SAM framework, [follow install instructions for your environment](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
-
-2. Initilize the SAM environment
+3. Initilize the SAM environment
 ```
 sam init
-...
+```
+You will be prompted with the following message:
+```
 Which template source would you like to use?
+
 	1 - AWS Quick Start Templates
 	2 - Custom Template Location
-Choice: 2
 
-Template location (git, mercurial, http(s), zip, path): https://github.com/aws-solutions-library-samples/guidance-for-product-catalog-enhancement-with-generative-ai-on-aws/tree/main/deployment
+``` 
 
-```
+Select choice: 2
 
-3. Build SAM Assets
+The file template is template.yaml inside the deployment folder.
+
+4. Build SAM Assets
 ```
 sam build
 ```
 
-4. Configure account credentials
+5. Configure account credentials
 ```
 export AWS_ACCESS_KEY_ID=<YOUR_ACCESS_KEY>
 export AWS_SECRET_ACCESS_KEY=<YOUR_SECRET_KEY>
@@ -167,6 +161,8 @@ Fill necessary prompts from SAM CLI
 ```
 Successfully created/updated stack - <STACK_NAME> in <AWS_REGION>
 ```
+
+## Running the Guidance
 
 1. To test the product enhancement process via API Gateway:
    
@@ -206,23 +202,23 @@ Successfully created/updated stack - <STACK_NAME> in <AWS_REGION>
    HINT: Navigate on each steps and check the enhanced text.
 
 
-## Adapting the guidance for your environment
-
-1. This guidance provide a private API Gateway. You can change the AWS Cloud Formation
-to deploy it in your existing VPC. T
-
-2. This API is already configured with Cognito authentication and a Cognito User pool is already deployed
-   a. To create a user on the user pool: https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html
-   b. To use the user to call the API externally: https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
-
-3. This guidance provide an AWS OpenSearch Serverless domain, you can use your own OpenSearch product catalog changing the environment variable ENDPOINT in lambda search-guidance-PushOpensearchFunction-XXXX and the required role.
-
 ## Next Steps
 
 - Customize the AI prompts in the Lambda functions to better suit your specific product catalog needs.
 - Implement additional data validation and error handling in the ingestion process.
 - Set up monitoring and alerting for the various components of the architecture.
 - Explore integrating the enhanced product catalog with your e-commerce frontend or recommendation systems.
+
+### Adapting the guidance for your environment
+
+1. This guidance provide a private API Gateway. You can change the AWS Cloud Formation
+to deploy it in your existing VPC.
+
+2. This API is already configured with Cognito authentication and a Cognito User pool is already deployed
+   a. To create a user on the user pool: https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html
+   b. To use the user to call the API externally: https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-invoke-api-integrated-with-cognito-user-pool.html
+
+3. This guidance provide an AWS OpenSearch Serverless domain, you can use your own OpenSearch product catalog changing the environment variable ENDPOINT in lambda search-guidance-PushOpensearchFunction-XXXX and the required role.
 
 ## Cleanup
 
