@@ -423,3 +423,5 @@ tests/integration/testdata/sync/code/before/dotnet_function/src/HelloWorld/obj/
 # Installer build folder
 .build
 
+# OSX
+.DS_Store
