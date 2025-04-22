@@ -485,26 +485,14 @@ Resources:
       KmsKeyArn: !GetAtt  KMSKeyEnhancementFunction.Arn
       Policies:
         - Statement:
-            - Sid: VisualEditor0
-              Effect: Allow
-              Action:
-                - aoss:ListCollections,
-                - aoss:CreateIndex,
-                - aoss:DescribeIndex,
-                - aoss:ReadDocument,
-                - aoss:WriteDocument,
-                - aoss:UpdateIndex,
-                - aoss:ListCollections,
-                - aoss:BatchGetCollection,
-                - aoss:ListAccessPolicies,
-                - aoss:ListSecurityConfigs,
-                - aoss:ListSecurityPolicies,
-                - aoss:ListTagsForResource,
-                - aoss:ListVpcEndpoints,
-                - aoss:GetAccessPolicy,
-                - aoss:GetAccountSettings,
-                - aoss:GetSecurityConfig,
-                - aoss:GetSecurityPolicy                
+            # - Sid: VisualEditor0
+            #   Effect: Allow
+            #   Action:
+            #     - aoss:CreateIndex,
+            #     - aoss:DescribeIndex,
+            #     - aoss:ReadDocument,
+            #     - aoss:WriteDocument,
+            #     - aoss:UpdateIndex            
                 #- aoss:APIAccessAll
                 #- aoss:BatchGetLifecyclePolicy
                 #- aoss:GetAccessPolicy
@@ -541,12 +529,17 @@ Resources:
                 #- aoss:ListCollections
                 #- aoss:DeleteAccessPolicy
                 #- aoss:CreateCollection
-              Resource: '*'
+            #  Resource: '*'
             - Sid: VisualEditor1
               Effect: Allow
               Action:
-                - aoss:ListCollections
-                - aoss:DashboardsAccessAll
+                - aoss:ListAccessPolicies,
+                - aoss:ListCollections,
+                - aoss:ListSecurityPolicies,
+                - aoss:ListTagsForResource,
+                - aoss:BatchGetCollection, 
+                - aoss:APIAccessAll, 
+                - aoss:DashboardsAccessAll             
               Resource:
                 -  !Sub 'arn:aws:aoss:*:${AWS::AccountId}:collection/*'
                 -  !Sub 'arn:aws:aoss:*:${AWS::AccountId}:dashboards/default'
