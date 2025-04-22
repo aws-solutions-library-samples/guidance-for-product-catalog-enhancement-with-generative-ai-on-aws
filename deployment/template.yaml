@@ -906,7 +906,7 @@ Resources:
       Policy: !Sub '[{"Rules": [{"Resource":
         ["collection/${CollectionName}"],"ResourceType": "collection"},
         {"Resource": ["collection/${CollectionName}"],"ResourceType":
-        "dashboard"}],"AllowFromPublic": true}]'
+        "dashboard"}],"AllowFromPublic": false, "SourceVPCEs": ["${TestAOSSVpcEndpoint}"]}]'
       Type: network
       Description: guidance-collection-network
       Name: !Sub 'network-policy-${CollectionName}'
@@ -999,6 +999,35 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
       VpcEndpointType: Interface
+
+  # create a vpc endpoint for opensearch serverless
+  TestAOSSVpcEndpoint:
+    Type: 'AWS::OpenSearchServerless::VpcEndpoint'
+    Properties:
+      Name: "opensearchserverless-vpce"
+      VpcId: !Ref VPC
+      SecurityGroupIds:
+        - !GetAtt privateapiguidancevpceSecurityGroup8C8216BD.GroupId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+  
+  # OpensearchserverlessvpceF4E01EB4:
+  #   Type: 'AWS::EC2::VPCEndpoint'
+  #   Properties:
+  #     ServiceName: !Join 
+  #       - ''
+  #       - - com.amazonaws.
+  #         - !Ref 'AWS::Region'
+  #         - .opensearchserverless
+  #     VpcId: !Ref VPC
+  #     PrivateDnsEnabled: true
+  #     SecurityGroupIds:
+  #       - !GetAtt privateapiguidancevpceSecurityGroup8C8216BD.GroupId
+  #     SubnetIds:
+  #       - !Ref PrivateSubnet1
+  #       - !Ref PrivateSubnet2
+  #     VpcEndpointType: Interface
   
   UserPool:
     Type: AWS::Cognito::UserPool
