@@ -493,7 +493,18 @@ Resources:
                 - aoss:DescribeIndex,
                 - aoss:ReadDocument,
                 - aoss:WriteDocument,
-                - aoss:UpdateIndex
+                - aoss:UpdateIndex,
+                - aoss:ListCollections,
+                - aoss:BatchGetCollection,
+                - aoss:ListAccessPolicies,
+                - aoss:ListSecurityConfigs,
+                - aoss:ListSecurityPolicies,
+                - aoss:ListTagsForResource,
+                - aoss:ListVpcEndpoints,
+                - aoss:GetAccessPolicy,
+                - aoss:GetAccountSettings,
+                - aoss:GetSecurityConfig,
+                - aoss:GetSecurityPolicy                
                 #- aoss:APIAccessAll
                 #- aoss:BatchGetLifecyclePolicy
                 #- aoss:GetAccessPolicy
