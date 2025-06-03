@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   guidance-search
-  Sample SAM Template for guidance-search
+  Sample SAM Template for guidance-search(SO9017)
 
 Globals:
   Function:
