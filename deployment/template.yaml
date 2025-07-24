@@ -533,12 +533,12 @@ Resources:
             - Sid: VisualEditor1
               Effect: Allow
               Action:
-                - aoss:ListAccessPolicies,
-                - aoss:ListCollections,
-                - aoss:ListSecurityPolicies,
-                - aoss:ListTagsForResource,
-                - aoss:BatchGetCollection, 
-                - aoss:APIAccessAll, 
+                - aoss:ListAccessPolicies
+                - aoss:ListCollections
+                - aoss:ListSecurityPolicies
+                - aoss:ListTagsForResource
+                - aoss:BatchGetCollection 
+                - aoss:APIAccessAll
                 - aoss:DashboardsAccessAll             
               Resource:
                 -  !Sub 'arn:aws:aoss:*:${AWS::AccountId}:collection/*'
